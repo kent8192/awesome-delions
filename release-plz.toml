@@ -1,0 +1,63 @@
+# release-plz configuration for awesome-delions
+# Documentation: https://release-plz.ieni.dev/docs/config
+
+[workspace]
+# Changelog settings
+changelog_update = true
+
+# PR settings
+# IMPORTANT: Branch prefix MUST start with "release-plz-" for native two-step release workflow.
+pr_branch_prefix = "release-plz-"
+pr_labels = ["release", "automated"]
+pr_name = "chore: release"
+
+# Git release settings - all delions get GitHub Releases
+git_release_enable = true
+git_tag_enable = true
+git_tag_name = "{{ package }}@v{{ version }}"
+git_release_type = "auto"
+
+# Publish settings
+semver_check = false
+publish_timeout = "10m"
+
+# Two-stage release workflow (native release-plz control):
+# - Stage 1: Push to main -> `release-plz release-pr` creates Release PR (branch: release-plz-*)
+# - Stage 2: Merge Release PR -> `release-plz release` detects commit from release-plz-* branch and publishes
+release_always = false
+
+# Each delion is independent (no inter-crate workspace dependencies), so verify is safe
+publish_no_verify = false
+
+[changelog]
+protect_breaking_commits = true
+sort_commits = "oldest"
+
+# Commit parsers: evaluated in order, first match wins.
+commit_parsers = [
+	# Skip: automated commits not relevant to release notes
+	{ message = "^chore: release", skip = true },
+	{ message = "^Merge", skip = true },
+	{ message = "^Revert \"", skip = true },
+	# Map: commit types to Keep a Changelog sections
+	{ message = "^feat", group = "Added" },
+	{ message = "^fix", group = "Fixed" },
+	{ message = "^perf", group = "Performance" },
+	{ message = "^refactor", group = "Changed" },
+	{ message = "^docs", group = "Documentation" },
+	{ message = "^revert", group = "Reverted" },
+	{ message = "^deprecated", group = "Deprecated" },
+	{ message = "^security", group = "Security" },
+	{ message = "^chore", group = "Maintenance" },
+	{ message = "^ci", group = "Maintenance" },
+	{ message = "^build", group = "Maintenance" },
+	{ message = "^test", group = "Testing" },
+	{ message = "^style", group = "Styling" },
+	# Catch-all
+	{ message = "^.*", group = "Other" },
+]
+
+# Convert GitHub issue/PR references to clickable links
+commit_preprocessors = [
+	{ pattern = '#(\d+)', replace = "[#${1}](https://github.com/kent8192/awesome-delions/issues/${1})" },
+]
