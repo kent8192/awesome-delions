@@ -1,0 +1,167 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  detect-changes:
+    name: Detect Changed Delions
+    runs-on: ubuntu-latest
+    outputs:
+      changed-delions: ${{ steps.detect.outputs.delions }}
+      has-changes: ${{ steps.detect.outputs.has_changes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed delions
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+
+          # Find changed directories under delions/
+          CHANGED=$(git diff --name-only "$BASE" HEAD -- 'delions/' | \
+            cut -d'/' -f2 | sort -u | \
+            while read -r dir; do
+              if [ -f "delions/$dir/Cargo.toml" ]; then
+                # Extract package name from Cargo.toml
+                NAME=$(grep '^name\s*=' "delions/$dir/Cargo.toml" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+                echo "$NAME"
+              fi
+            done)
+
+          if [ -z "$CHANGED" ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "delions=[]" >> "$GITHUB_OUTPUT"
+          else
+            JSON=$(echo "$CHANGED" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "delions=$JSON" >> "$GITHUB_OUTPUT"
+          fi
+
+  check:
+    name: Check (${{ matrix.delion }})
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        delion: ${{ fromJson(needs.detect-changes.outputs.changed-delions) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run cargo check
+        run: cargo check -p ${{ matrix.delion }}
+
+  fmt:
+    name: Format (${{ matrix.delion }})
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        delion: ${{ fromJson(needs.detect-changes.outputs.changed-delions) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Run cargo fmt check
+        run: cargo fmt -p ${{ matrix.delion }} -- --check
+
+  clippy:
+    name: Clippy (${{ matrix.delion }})
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        delion: ${{ fromJson(needs.detect-changes.outputs.changed-delions) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Run cargo clippy
+        run: cargo clippy -p ${{ matrix.delion }} -- -D warnings
+
+  test:
+    name: Test (${{ matrix.delion }})
+    needs: [detect-changes, check, fmt, clippy]
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        delion: ${{ fromJson(needs.detect-changes.outputs.changed-delions) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run tests
+        run: cargo nextest run -p ${{ matrix.delion }}
+
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - check
+      - fmt
+      - clippy
+      - test
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.detect-changes.outputs.has-changes }}" = "false" ]; then
+            echo "No delion changes detected, CI passes."
+            exit 0
+          fi
+          if [ "${{ needs.check.result }}" = "failure" ] || \
+             [ "${{ needs.fmt.result }}" = "failure" ] || \
+             [ "${{ needs.clippy.result }}" = "failure" ] || \
+             [ "${{ needs.test.result }}" = "failure" ]; then
+            echo "One or more CI jobs failed."
+            exit 1
+          fi
+          echo "All CI checks passed!"
