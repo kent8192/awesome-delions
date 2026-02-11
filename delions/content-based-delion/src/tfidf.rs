@@ -273,6 +273,57 @@ mod tests {
 	}
 
 	#[rstest]
+	fn transform_with_only_unknown_tokens_produces_zero_vector() {
+		// Arrange
+		let mut tfidf = TfIdf::new(TfIdfConfig::default());
+		let docs = vec![make_doc(1, &["cat", "dog"]), make_doc(2, &["cat", "fish"])];
+		tfidf.fit(&docs).unwrap();
+
+		let unknown_doc = make_doc(3, &["zebra", "elephant"]);
+
+		// Act
+		let vector = tfidf.transform(&unknown_doc).unwrap();
+
+		// Assert
+		assert_eq!(vector.dimension(), 3); // cat, dog, fish
+		assert!(vector.values.iter().all(|&v| v == 0.0));
+	}
+
+	#[rstest]
+	fn fit_min_df_filters_all_vocabulary() {
+		// Arrange — every term appears in only 1 doc, min_df=2 filters all
+		let config = TfIdfConfig {
+			min_df: 2,
+			..TfIdfConfig::default()
+		};
+		let mut tfidf = TfIdf::new(config);
+		let docs = vec![make_doc(1, &["alpha"]), make_doc(2, &["beta"])];
+
+		// Act
+		tfidf.fit(&docs).unwrap();
+
+		// Assert
+		assert_eq!(tfidf.vocabulary_size(), Some(0));
+	}
+
+	#[rstest]
+	fn fit_with_empty_token_documents_mixed_in() {
+		// Arrange
+		let mut tfidf = TfIdf::new(TfIdfConfig::default());
+		let docs = vec![
+			make_doc(1, &["hello", "world"]),
+			make_doc(2, &[]),
+			make_doc(3, &["hello"]),
+		];
+
+		// Act
+		tfidf.fit(&docs).unwrap();
+
+		// Assert — "hello" (df=2), "world" (df=1) both pass default min_df=1
+		assert_eq!(tfidf.vocabulary_size(), Some(2));
+	}
+
+	#[rstest]
 	fn sublinear_tf_applied() {
 		// Arrange — use 3 docs so "word" (df=1) has non-zero IDF: ln(3/2)
 		let config = TfIdfConfig {

@@ -209,4 +209,24 @@ mod tests {
 	fn item_id_display() {
 		assert_eq!(ItemId(99).to_string(), "99");
 	}
+
+	#[rstest]
+	fn feature_vector_normalize_zero_vector_returns_zero_vector() {
+		// Arrange
+		let v = FeatureVector::new(vec![0.0, 0.0, 0.0]);
+
+		// Act
+		let normalized = v.normalize().unwrap();
+
+		// Assert
+		assert_eq!(normalized.values, vec![0.0, 0.0, 0.0]);
+	}
+
+	#[rstest]
+	fn feature_vector_dot_empty_vectors() {
+		let a = FeatureVector::new(vec![]);
+		let b = FeatureVector::new(vec![]);
+		let result = a.dot(&b).unwrap();
+		assert_eq!(result, 0.0);
+	}
 }

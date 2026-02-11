@@ -159,6 +159,48 @@ mod tests {
 	}
 
 	#[rstest]
+	fn recommend_with_euclidean_distance() {
+		// Arrange
+		let recommender =
+			ContentBasedRecommender::new(Box::new(crate::similarity::EuclideanDistance));
+		let user = make_user_profile(1, vec![1.0, 0.0]);
+		let items = vec![
+			make_item_profile(1, vec![1.0, 0.0]), // distance=0, sim=1.0
+			make_item_profile(2, vec![0.0, 1.0]), // distance=sqrt(2), sim=1/(1+sqrt(2))
+			make_item_profile(3, vec![0.9, 0.1]), // distance~0.14, sim~0.88
+		];
+
+		// Act
+		let recs = recommender
+			.recommend(&user, &items, 3, &HashSet::new())
+			.unwrap();
+
+		// Assert
+		assert_eq!(recs[0].item_id, ItemId(1));
+		assert_eq!(recs[1].item_id, ItemId(3));
+		assert_eq!(recs[2].item_id, ItemId(2));
+		assert_eq!(recs[0].score, 1.0);
+	}
+
+	#[rstest]
+	fn recommend_exclude_all_items_returns_empty() {
+		// Arrange
+		let recommender = ContentBasedRecommender::new(Box::new(CosineSimilarity));
+		let user = make_user_profile(1, vec![1.0, 0.0]);
+		let items = vec![
+			make_item_profile(1, vec![1.0, 0.0]),
+			make_item_profile(2, vec![0.0, 1.0]),
+		];
+		let exclude: HashSet<ItemId> = [ItemId(1), ItemId(2)].into_iter().collect();
+
+		// Act
+		let recs = recommender.recommend(&user, &items, 10, &exclude).unwrap();
+
+		// Assert
+		assert!(recs.is_empty());
+	}
+
+	#[rstest]
 	fn recommend_full_pipeline() {
 		// Arrange — end-to-end test with TF-IDF
 		// Uses 5 documents so that shared terms retain non-zero IDF values.

@@ -88,6 +88,15 @@ mod tests {
 	}
 
 	#[rstest]
+	fn cosine_both_zero_vectors_returns_zero() {
+		let sim = CosineSimilarity;
+		let a = FeatureVector::new(vec![0.0, 0.0, 0.0]);
+		let b = FeatureVector::new(vec![0.0, 0.0, 0.0]);
+		let result = sim.compute(&a, &b).unwrap();
+		assert_eq!(result, 0.0);
+	}
+
+	#[rstest]
 	fn cosine_known_value() {
 		// Arrange
 		let sim = CosineSimilarity;

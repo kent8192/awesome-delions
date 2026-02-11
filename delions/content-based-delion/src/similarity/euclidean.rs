@@ -83,6 +83,19 @@ mod tests {
 	}
 
 	#[rstest]
+	fn euclidean_identical_vectors_returns_one() {
+		// Arrange
+		let metric = EuclideanDistance;
+		let a = FeatureVector::new(vec![3.0, 7.0, -2.0]);
+
+		// Act
+		let result = metric.compute(&a, &a).unwrap();
+
+		// Assert — distance=0, similarity = 1/(1+0) = 1.0
+		assert_eq!(result, 1.0);
+	}
+
+	#[rstest]
 	fn euclidean_similarity_decreases_with_distance() {
 		// Arrange
 		let metric = EuclideanDistance;

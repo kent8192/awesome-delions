@@ -90,6 +90,19 @@ mod tests {
 	}
 
 	#[rstest]
+	fn tf_same_token_repeated_many_times() {
+		// Arrange
+		let vocab = make_vocab(&["word"]);
+		let tokens: Vec<String> = std::iter::repeat_n("word".to_string(), 100).collect();
+
+		// Act
+		let tf = compute_tf(&tokens, &vocab, false);
+
+		// Assert
+		assert_eq!(tf[vocab["word"]], 100.0);
+	}
+
+	#[rstest]
 	fn tf_unknown_tokens_ignored() {
 		// Arrange
 		let vocab = make_vocab(&["known"]);

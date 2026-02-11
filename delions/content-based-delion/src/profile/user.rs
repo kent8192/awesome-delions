@@ -118,6 +118,49 @@ mod tests {
 	}
 
 	#[rstest]
+	fn build_profile_single_item_weighted_average_equals_original() {
+		// Arrange
+		let profiles = vec![make_item_profile(1, vec![3.0, 7.0, 1.0])];
+		let rated_items = vec![(ItemId(1), 4.0)];
+
+		// Act
+		let user_profile =
+			UserProfileBuilder::build_profile(UserId(1), &rated_items, &profiles).unwrap();
+
+		// Assert — single item: [3,7,1] * 4 / 4 = [3, 7, 1]
+		assert!((user_profile.features.values[0] - 3.0).abs() < 1e-10);
+		assert!((user_profile.features.values[1] - 7.0).abs() < 1e-10);
+		assert!((user_profile.features.values[2] - 1.0).abs() < 1e-10);
+	}
+
+	#[rstest]
+	fn build_profile_high_vs_low_rating_weight_difference() {
+		// Arrange
+		let profiles = vec![
+			make_item_profile(1, vec![1.0, 0.0]),
+			make_item_profile(2, vec![0.0, 1.0]),
+		];
+		let rated_items_high_first = vec![(ItemId(1), 9.0), (ItemId(2), 1.0)];
+		let rated_items_high_second = vec![(ItemId(1), 1.0), (ItemId(2), 9.0)];
+
+		// Act
+		let profile_high_first =
+			UserProfileBuilder::build_profile(UserId(1), &rated_items_high_first, &profiles)
+				.unwrap();
+		let profile_high_second =
+			UserProfileBuilder::build_profile(UserId(2), &rated_items_high_second, &profiles)
+				.unwrap();
+
+		// Assert — high rating on item 1 should pull features toward [1,0]
+		assert!(profile_high_first.features.values[0] > profile_high_first.features.values[1]);
+		// High rating on item 2 should pull features toward [0,1]
+		assert!(profile_high_second.features.values[1] > profile_high_second.features.values[0]);
+		// Exact values: high_first = [0.9, 0.1], high_second = [0.1, 0.9]
+		assert!((profile_high_first.features.values[0] - 0.9).abs() < 1e-10);
+		assert!((profile_high_second.features.values[1] - 0.9).abs() < 1e-10);
+	}
+
+	#[rstest]
 	fn build_profile_missing_item_returns_error() {
 		// Arrange
 		let profiles = vec![make_item_profile(1, vec![1.0])];
