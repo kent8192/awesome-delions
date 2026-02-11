@@ -197,4 +197,37 @@ mod tests {
 		// Assert
 		assert_eq!(duration, Duration::from_secs(3600));
 	}
+
+	#[rstest]
+	fn interaction_kind_equality() {
+		assert_eq!(InteractionKind::View, InteractionKind::View);
+		assert_eq!(InteractionKind::Rating, InteractionKind::Rating);
+		assert_eq!(InteractionKind::Purchase, InteractionKind::Purchase);
+		assert_eq!(InteractionKind::Click, InteractionKind::Click);
+		assert_ne!(InteractionKind::View, InteractionKind::Rating);
+		assert_ne!(InteractionKind::View, InteractionKind::Purchase);
+		assert_ne!(InteractionKind::View, InteractionKind::Click);
+		assert_ne!(InteractionKind::Rating, InteractionKind::Purchase);
+		assert_ne!(InteractionKind::Rating, InteractionKind::Click);
+		assert_ne!(InteractionKind::Purchase, InteractionKind::Click);
+	}
+
+	#[rstest]
+	fn item_metadata_clone_and_debug() {
+		// Arrange
+		let metadata = ItemMetadata {
+			id: ItemId(99),
+			category: Category("books".to_string()),
+		};
+
+		// Act
+		let cloned = metadata.clone();
+		let debug_output = format!("{:?}", metadata);
+
+		// Assert
+		assert_eq!(cloned.id, ItemId(99));
+		assert_eq!(cloned.category, Category("books".to_string()));
+		assert!(debug_output.contains("ItemMetadata"));
+		assert!(debug_output.contains("99"));
+	}
 }

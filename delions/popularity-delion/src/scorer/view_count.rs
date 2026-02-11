@@ -153,4 +153,76 @@ mod tests {
 		// Assert
 		assert!(scores.is_empty());
 	}
+
+	#[rstest]
+	fn aggregates_multiple_views_for_same_item() {
+		// Arrange
+		let base = SystemTime::UNIX_EPOCH;
+		let window = TimeWindow::new(base, base + Duration::from_secs(3600)).unwrap();
+		let events = vec![
+			InteractionEvent {
+				item_id: ItemId(5),
+				timestamp: base + Duration::from_secs(100),
+				kind: InteractionKind::View,
+			},
+			InteractionEvent {
+				item_id: ItemId(5),
+				timestamp: base + Duration::from_secs(200),
+				kind: InteractionKind::View,
+			},
+			InteractionEvent {
+				item_id: ItemId(5),
+				timestamp: base + Duration::from_secs(300),
+				kind: InteractionKind::View,
+			},
+			InteractionEvent {
+				item_id: ItemId(5),
+				timestamp: base + Duration::from_secs(400),
+				kind: InteractionKind::View,
+			},
+		];
+
+		// Act
+		let scores = ViewCountScorer.score(&events, &window).unwrap();
+
+		// Assert
+		assert_eq!(scores.len(), 1);
+		assert_eq!(scores[0].item_id, ItemId(5));
+		assert_eq!(scores[0].score, 4.0);
+	}
+
+	#[rstest]
+	fn ignores_purchase_and_click_events() {
+		// Arrange
+		let base = SystemTime::UNIX_EPOCH;
+		let window = TimeWindow::new(base, base + Duration::from_secs(3600)).unwrap();
+		let events = vec![
+			InteractionEvent {
+				item_id: ItemId(1),
+				timestamp: base + Duration::from_secs(100),
+				kind: InteractionKind::Purchase,
+			},
+			InteractionEvent {
+				item_id: ItemId(2),
+				timestamp: base + Duration::from_secs(200),
+				kind: InteractionKind::Click,
+			},
+			InteractionEvent {
+				item_id: ItemId(3),
+				timestamp: base + Duration::from_secs(300),
+				kind: InteractionKind::Purchase,
+			},
+			InteractionEvent {
+				item_id: ItemId(4),
+				timestamp: base + Duration::from_secs(400),
+				kind: InteractionKind::Click,
+			},
+		];
+
+		// Act
+		let scores = ViewCountScorer.score(&events, &window).unwrap();
+
+		// Assert
+		assert!(scores.is_empty());
+	}
 }

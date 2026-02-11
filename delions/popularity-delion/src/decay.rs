@@ -205,4 +205,28 @@ mod tests {
 		assert_eq!(decay.weight(Duration::ZERO), 1.0);
 		assert_eq!(decay.weight(Duration::from_secs(999_999)), 1.0);
 	}
+
+	#[rstest]
+	fn exponential_decay_very_large_age() {
+		// Arrange
+		let decay = ExponentialDecay::new(Duration::from_secs(3600)).unwrap();
+
+		// Act (age = 100 half-lives)
+		let w = decay.weight(Duration::from_secs(360_000));
+
+		// Assert
+		assert!(w.abs() < 1e-10);
+	}
+
+	#[rstest]
+	fn linear_decay_quarter_max_age() {
+		// Arrange
+		let decay = LinearDecay::new(Duration::from_secs(3600)).unwrap();
+
+		// Act
+		let w = decay.weight(Duration::from_secs(900));
+
+		// Assert
+		assert!((w - 0.75).abs() < f64::EPSILON);
+	}
 }

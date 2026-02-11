@@ -176,4 +176,67 @@ mod tests {
 		// Assert
 		assert!(scores.is_empty());
 	}
+
+	#[rstest]
+	fn exponential_vs_linear_decay_comparison() {
+		// Arrange
+		let base = SystemTime::UNIX_EPOCH;
+		let window = TimeWindow::new(base, base + Duration::from_secs(7200)).unwrap();
+		let events = vec![
+			InteractionEvent {
+				item_id: ItemId(1),
+				timestamp: base + Duration::from_secs(100),
+				kind: crate::types::InteractionKind::View,
+			},
+			InteractionEvent {
+				item_id: ItemId(2),
+				timestamp: base + Duration::from_secs(7000),
+				kind: crate::types::InteractionKind::View,
+			},
+		];
+
+		let exp_decay = ExponentialDecay::new(Duration::from_secs(3600)).unwrap();
+		let exp_scorer = TrendingScorer::new(Box::new(exp_decay));
+
+		let lin_decay = crate::decay::LinearDecay::new(Duration::from_secs(7200)).unwrap();
+		let lin_scorer = TrendingScorer::new(Box::new(lin_decay));
+
+		// Act
+		let exp_scores = exp_scorer.score(&events, &window).unwrap();
+		let lin_scores = lin_scorer.score(&events, &window).unwrap();
+
+		// Assert
+		// Both should rank item 2 (recent) higher than item 1 (old)
+		assert_eq!(exp_scores[0].item_id, ItemId(2));
+		assert_eq!(lin_scores[0].item_id, ItemId(2));
+		// Both should have 2 scored items
+		assert_eq!(exp_scores.len(), 2);
+		assert_eq!(lin_scores.len(), 2);
+	}
+
+	#[rstest]
+	fn all_events_outside_window_returns_empty() {
+		// Arrange
+		let base = SystemTime::UNIX_EPOCH + Duration::from_secs(10_000);
+		let window = TimeWindow::new(base, base + Duration::from_secs(3600)).unwrap();
+		let scorer = TrendingScorer::new(Box::new(NoDecay));
+		let events = vec![
+			InteractionEvent {
+				item_id: ItemId(1),
+				timestamp: SystemTime::UNIX_EPOCH + Duration::from_secs(100),
+				kind: crate::types::InteractionKind::View,
+			},
+			InteractionEvent {
+				item_id: ItemId(2),
+				timestamp: base + Duration::from_secs(5000),
+				kind: crate::types::InteractionKind::View,
+			},
+		];
+
+		// Act
+		let scores = scorer.score(&events, &window).unwrap();
+
+		// Assert
+		assert!(scores.is_empty());
+	}
 }

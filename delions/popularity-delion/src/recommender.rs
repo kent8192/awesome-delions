@@ -214,4 +214,98 @@ mod tests {
 		// Assert
 		assert!(matches!(result, Err(PopularityError::CategoryNotFound(_))));
 	}
+
+	#[rstest]
+	fn recommend_with_zero_n_returns_empty(
+		window: TimeWindow,
+		sample_events: Vec<InteractionEvent>,
+	) {
+		// Arrange
+		let recommender = PopularityRecommender::new(Box::new(ViewCountScorer));
+
+		// Act
+		let recs = recommender.recommend(&sample_events, &window, 0).unwrap();
+
+		// Assert
+		assert!(recs.is_empty());
+	}
+
+	#[rstest]
+	fn recommend_by_category_with_empty_events(window: TimeWindow) {
+		// Arrange
+		let recommender = PopularityRecommender::new(Box::new(ViewCountScorer));
+		let metadata = vec![ItemMetadata {
+			id: ItemId(1),
+			category: Category("electronics".to_string()),
+		}];
+		let category = Category("electronics".to_string());
+
+		// Act
+		let recs = recommender
+			.recommend_by_category(&[], &metadata, &window, &category, 10)
+			.unwrap();
+
+		// Assert
+		assert!(recs.is_empty());
+	}
+
+	#[rstest]
+	fn recommend_by_category_multiple_categories(
+		window: TimeWindow,
+		sample_events: Vec<InteractionEvent>,
+	) {
+		// Arrange
+		let recommender = PopularityRecommender::new(Box::new(ViewCountScorer));
+		let metadata = vec![
+			ItemMetadata {
+				id: ItemId(1),
+				category: Category("electronics".to_string()),
+			},
+			ItemMetadata {
+				id: ItemId(2),
+				category: Category("books".to_string()),
+			},
+			ItemMetadata {
+				id: ItemId(3),
+				category: Category("clothing".to_string()),
+			},
+		];
+
+		// Act
+		let electronics = recommender
+			.recommend_by_category(
+				&sample_events,
+				&metadata,
+				&window,
+				&Category("electronics".to_string()),
+				10,
+			)
+			.unwrap();
+		let books = recommender
+			.recommend_by_category(
+				&sample_events,
+				&metadata,
+				&window,
+				&Category("books".to_string()),
+				10,
+			)
+			.unwrap();
+		let clothing = recommender
+			.recommend_by_category(
+				&sample_events,
+				&metadata,
+				&window,
+				&Category("clothing".to_string()),
+				10,
+			)
+			.unwrap();
+
+		// Assert
+		assert_eq!(electronics.len(), 1);
+		assert_eq!(electronics[0].item_id, ItemId(1));
+		assert_eq!(books.len(), 1);
+		assert_eq!(books[0].item_id, ItemId(2));
+		assert_eq!(clothing.len(), 1);
+		assert_eq!(clothing[0].item_id, ItemId(3));
+	}
 }
