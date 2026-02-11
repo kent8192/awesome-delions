@@ -217,4 +217,48 @@ mod tests {
 		// Assert: mean of [5.0, 3.0, 4.0, 2.0] = 14.0 / 4 = 3.5
 		assert_abs_diff_eq!(matrix.global_mean, 3.5);
 	}
+
+	#[rstest]
+	fn single_user_single_item_matrix() {
+		// Arrange
+		let ratings = vec![Rating {
+			user_id: UserId(7),
+			item_id: ItemId(3),
+			value: 4.0,
+		}];
+
+		// Act
+		let matrix = RatingMatrix::from_ratings(&ratings).unwrap();
+
+		// Assert
+		assert_eq!(matrix.n_users(), 1);
+		assert_eq!(matrix.n_items(), 1);
+		assert_eq!(matrix.get(0, 0), 4.0);
+		assert!(matrix.is_observed(0, 0));
+		assert_abs_diff_eq!(matrix.global_mean, 4.0);
+		assert_eq!(matrix.user_to_index(UserId(7)), Some(0));
+		assert_eq!(matrix.item_to_index(ItemId(3)), Some(0));
+		assert_eq!(matrix.index_to_user(0), Some(UserId(7)));
+		assert_eq!(matrix.index_to_item(0), Some(ItemId(3)));
+	}
+
+	#[rstest]
+	fn index_to_user_out_of_range_returns_none(sample_ratings: Vec<Rating>) {
+		// Arrange
+		let matrix = RatingMatrix::from_ratings(&sample_ratings).unwrap();
+
+		// Act & Assert
+		assert_eq!(matrix.index_to_user(matrix.n_users()), None);
+		assert_eq!(matrix.index_to_user(100), None);
+	}
+
+	#[rstest]
+	fn index_to_item_out_of_range_returns_none(sample_ratings: Vec<Rating>) {
+		// Arrange
+		let matrix = RatingMatrix::from_ratings(&sample_ratings).unwrap();
+
+		// Act & Assert
+		assert_eq!(matrix.index_to_item(matrix.n_items()), None);
+		assert_eq!(matrix.index_to_item(100), None);
+	}
 }

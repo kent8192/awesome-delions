@@ -244,4 +244,60 @@ mod tests {
 			Err(MatrixFactorizationError::ItemNotFound(ItemId(99)))
 		));
 	}
+
+	#[rstest]
+	fn predict_existing_user_item(pipeline_ratings: Vec<Rating>) {
+		// Arrange
+		let recommender = MatrixFactorizationRecommender;
+		let config = ModelConfig {
+			n_factors: 3,
+			regularization: 0.01,
+			max_iterations: 200,
+			tolerance: 1e-6,
+			..ModelConfig::default()
+		};
+		let factorizer = AlsFactorizer;
+		let (model, matrix) = recommender
+			.train(&pipeline_ratings, &config, &factorizer)
+			.unwrap();
+
+		// Act: predict for multiple observed user-item pairs
+		let pred_u0_i1 = recommender
+			.predict(&model, &matrix, UserId(0), ItemId(1))
+			.unwrap();
+		let pred_u2_i3 = recommender
+			.predict(&model, &matrix, UserId(2), ItemId(3))
+			.unwrap();
+
+		// Assert: predictions should be near observed values
+		assert_abs_diff_eq!(pred_u0_i1, 3.0, epsilon = 1.0);
+		assert_abs_diff_eq!(pred_u2_i3, 3.0, epsilon = 1.0);
+	}
+
+	#[rstest]
+	fn recommend_n_exceeds_unrated_items(pipeline_ratings: Vec<Rating>) {
+		// Arrange
+		let recommender = MatrixFactorizationRecommender;
+		let config = ModelConfig {
+			n_factors: 3,
+			regularization: 0.01,
+			max_iterations: 200,
+			tolerance: 1e-6,
+			..ModelConfig::default()
+		};
+		let factorizer = AlsFactorizer;
+		let (model, matrix) = recommender
+			.train(&pipeline_ratings, &config, &factorizer)
+			.unwrap();
+
+		// Act: user 0 has 3 rated items out of 4, so only 1 unrated;
+		// requesting 100 should return only the available unrated items
+		let recs = recommender
+			.recommend(&model, &matrix, UserId(0), 100)
+			.unwrap();
+
+		// Assert: only 1 unrated item (item 3) for user 0
+		assert_eq!(recs.len(), 1);
+		assert_eq!(recs[0].item_id, ItemId(3));
+	}
 }

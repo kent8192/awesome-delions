@@ -347,4 +347,56 @@ mod tests {
 		assert_abs_diff_eq!(x[0], 1.0, epsilon = 1e-10);
 		assert_abs_diff_eq!(x[1], 3.0, epsilon = 1e-10);
 	}
+
+	#[rstest]
+	fn als_zero_regularization(small_ratings: Vec<Rating>) {
+		// Arrange: lambda = 0.0 means no regularization
+		let matrix = RatingMatrix::from_ratings(&small_ratings).unwrap();
+		let config = ModelConfig {
+			n_factors: 3,
+			regularization: 0.0,
+			max_iterations: 200,
+			tolerance: 1e-6,
+			..ModelConfig::default()
+		};
+
+		// Act
+		let model = AlsFactorizer.factorize(&matrix, &config).unwrap();
+
+		// Assert: should still produce finite predictions
+		for u in 0..matrix.n_users() {
+			for i in 0..matrix.n_items() {
+				let pred = model.predict(u, i);
+				assert!(
+					pred.is_finite(),
+					"prediction should be finite with zero regularization"
+				);
+			}
+		}
+	}
+
+	#[rstest]
+	fn als_high_regularization(small_ratings: Vec<Rating>) {
+		// Arrange: very large lambda pushes factors toward zero
+		let matrix = RatingMatrix::from_ratings(&small_ratings).unwrap();
+		let config = ModelConfig {
+			n_factors: 3,
+			regularization: 1000.0,
+			max_iterations: 200,
+			tolerance: 1e-6,
+			..ModelConfig::default()
+		};
+
+		// Act
+		let model = AlsFactorizer.factorize(&matrix, &config).unwrap();
+
+		// Assert: with extreme regularization, predictions should be close to global_mean
+		// because factors are driven near zero
+		for u in 0..matrix.n_users() {
+			for i in 0..matrix.n_items() {
+				let pred = model.predict(u, i);
+				assert_abs_diff_eq!(pred, matrix.global_mean, epsilon = 1.0);
+			}
+		}
+	}
 }

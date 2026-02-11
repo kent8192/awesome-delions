@@ -66,4 +66,39 @@ mod tests {
 		};
 		assert_eq!(model.n_factors(), 3);
 	}
+
+	#[rstest]
+	fn predict_adds_global_mean() {
+		// Arrange: zero factors so dot product is 0; global_mean drives prediction
+		let model = LatentFactorModel {
+			user_factors: array![[0.0, 0.0]],
+			item_factors: array![[0.0, 0.0]],
+			global_mean: 3.5,
+		};
+
+		// Act
+		let pred = model.predict(0, 0);
+
+		// Assert: 0.0 + 3.5 = 3.5
+		assert_abs_diff_eq!(pred, 3.5);
+	}
+
+	#[rstest]
+	fn predict_with_large_factor_count() {
+		// Arrange: 10 latent factors
+		let user_factors = Array2::from_elem((2, 10), 0.1);
+		let item_factors = Array2::from_elem((3, 10), 0.2);
+		let model = LatentFactorModel {
+			user_factors,
+			item_factors,
+			global_mean: 1.0,
+		};
+
+		// Act: dot product of [0.1]*10 . [0.2]*10 = 10 * 0.02 = 0.2; + 1.0 = 1.2
+		let pred = model.predict(0, 0);
+
+		// Assert
+		assert_abs_diff_eq!(pred, 1.2, epsilon = 1e-10);
+		assert_eq!(model.n_factors(), 10);
+	}
 }

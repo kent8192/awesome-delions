@@ -266,4 +266,92 @@ mod tests {
 			}
 		}
 	}
+
+	#[rstest]
+	fn svd_near_identity_input() {
+		// Arrange: uniform ratings where all values are the same
+		let ratings = vec![
+			Rating {
+				user_id: UserId(0),
+				item_id: ItemId(0),
+				value: 3.0,
+			},
+			Rating {
+				user_id: UserId(0),
+				item_id: ItemId(1),
+				value: 3.0,
+			},
+			Rating {
+				user_id: UserId(1),
+				item_id: ItemId(0),
+				value: 3.0,
+			},
+			Rating {
+				user_id: UserId(1),
+				item_id: ItemId(1),
+				value: 3.0,
+			},
+		];
+		let matrix = RatingMatrix::from_ratings(&ratings).unwrap();
+		let config = ModelConfig {
+			n_factors: 2,
+			max_iterations: 200,
+			tolerance: 1e-6,
+			..ModelConfig::default()
+		};
+
+		// Act
+		let model = SvdFactorizer.factorize(&matrix, &config).unwrap();
+
+		// Assert: predictions should all be close to 3.0
+		for u in 0..2 {
+			for i in 0..2 {
+				assert_abs_diff_eq!(model.predict(u, i), 3.0, epsilon = 0.5);
+			}
+		}
+	}
+
+	#[rstest]
+	fn svd_n_factors_larger_than_dimensions(small_ratings: Vec<Rating>) {
+		// Arrange: n_factors (10) > min(n_users=3, n_items=4)
+		let matrix = RatingMatrix::from_ratings(&small_ratings).unwrap();
+		let config = ModelConfig {
+			n_factors: 10,
+			max_iterations: 100,
+			tolerance: 1e-4,
+			..ModelConfig::default()
+		};
+
+		// Act: should not panic even with oversized factors
+		let model = SvdFactorizer.factorize(&matrix, &config).unwrap();
+
+		// Assert: model dimensions are correct
+		assert_eq!(model.n_factors(), 10);
+		assert_eq!(model.user_factors.nrows(), matrix.n_users());
+		assert_eq!(model.item_factors.nrows(), matrix.n_items());
+	}
+
+	#[rstest]
+	fn svd_few_iterations_convergence(small_ratings: Vec<Rating>) {
+		// Arrange: very few iterations (1)
+		let matrix = RatingMatrix::from_ratings(&small_ratings).unwrap();
+		let config = ModelConfig {
+			n_factors: 2,
+			max_iterations: 1,
+			tolerance: 1e-4,
+			..ModelConfig::default()
+		};
+
+		// Act: should still produce a model without errors
+		let model = SvdFactorizer.factorize(&matrix, &config).unwrap();
+
+		// Assert: model is valid even with minimal iterations
+		// NOTE: predictions may not be accurate with 1 iteration, but should be finite
+		for u in 0..matrix.n_users() {
+			for i in 0..matrix.n_items() {
+				let pred = model.predict(u, i);
+				assert!(pred.is_finite(), "prediction should be finite");
+			}
+		}
+	}
 }

@@ -92,4 +92,38 @@ mod tests {
 		assert_eq!(config.max_iterations, 100);
 		assert_eq!(config.tolerance, 1e-4);
 	}
+
+	#[rstest]
+	fn model_config_custom_values() {
+		// Arrange
+		let config = ModelConfig {
+			n_factors: 50,
+			learning_rate: 0.005,
+			regularization: 0.5,
+			max_iterations: 500,
+			tolerance: 1e-8,
+		};
+
+		// Assert
+		assert_eq!(config.n_factors, 50);
+		assert_eq!(config.learning_rate, 0.005);
+		assert_eq!(config.regularization, 0.5);
+		assert_eq!(config.max_iterations, 500);
+		assert_eq!(config.tolerance, 1e-8);
+	}
+
+	#[rstest]
+	fn rating_field_access() {
+		// Arrange
+		let rating = Rating {
+			user_id: UserId(10),
+			item_id: ItemId(20),
+			value: 4.5,
+		};
+
+		// Assert
+		assert_eq!(rating.user_id, UserId(10));
+		assert_eq!(rating.item_id, ItemId(20));
+		assert_eq!(rating.value, 4.5);
+	}
 }
