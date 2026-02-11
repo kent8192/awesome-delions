@@ -1,0 +1,21 @@
+[package]
+name = "{{project-name}}"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "{{description}}"
+include = [
+	"src/**",
+	"README.md",
+	"LICENSE-MIT",
+	"LICENSE-APACHE",
+	"CHANGELOG.md",
+]
+
+[dependencies]
+reinhardt = { version = "0.1.0-alpha", default-features = false, features = ["dentdelion"] }
+
+[lints]
+workspace = true

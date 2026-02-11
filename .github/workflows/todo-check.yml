@@ -1,0 +1,57 @@
+name: TODO Check
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  todo-check:
+    name: TODO Comment Check
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep TODO check
+        run: semgrep ci --config .semgrep/ --metrics off
+
+  clippy-todo-check:
+    name: Clippy TODO Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Check for workspace members
+        id: check-members
+        run: |
+          MEMBERS=$(cargo metadata --no-deps --format-version 1 2>/dev/null | jq '.packages | length')
+          if [ "$MEMBERS" -gt 0 ] 2>/dev/null; then
+            echo "has_members=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_members=false" >> "$GITHUB_OUTPUT"
+            echo "No workspace members found, skipping clippy TODO check."
+          fi
+
+      - name: Check for todo! and dbg! macros
+        if: steps.check-members.outputs.has_members == 'true'
+        run: |
+          cargo clippy --workspace --all-targets -- \
+            -D clippy::todo \
+            -D clippy::dbg_macro

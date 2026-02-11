@@ -1,0 +1,75 @@
+name: Security Vulnerability
+description: Report a security vulnerability (PRIVATE)
+title: "[Security]: <brief description>"
+labels: ["security", "critical"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## SECURITY VULNERABILITY REPORT
+
+        **IMPORTANT:** This issue will be created as a **PRIVATE** issue.
+        DO NOT disclose security vulnerabilities publicly.
+
+  - type: textarea
+    attributes:
+      label: Vulnerability Description
+      description: Clearly describe the security vulnerability
+      placeholder: |
+        Example: The auth-delion plugin allows authentication bypass
+        when a specially crafted token is provided.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Affected Delion
+      description: Which delion crate is affected?
+      placeholder: "e.g., auth-delion 0.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the vulnerability
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Severity Level
+      description: Estimate the severity level (maintainers will confirm)
+      options:
+        - Critical (CVSS 9.0-10.0)
+        - High (CVSS 7.0-8.9)
+        - Medium (CVSS 4.0-6.9)
+        - Low (CVSS 0.1-3.9)
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Impact Assessment
+      description: What is the impact of this vulnerability?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Proposed Mitigation
+      description: Suggested fix or workaround (optional)
+    validations:
+      required: false
+
+  - type: checkboxes
+    attributes:
+      label: Confirmation
+      description: Please confirm the following
+      options:
+        - label: "I have searched existing issues for duplicate vulnerabilities"
+          required: true
+        - label: "I have NOT disclosed this vulnerability publicly"
+          required: true
+        - label: "I understand this will be created as a PRIVATE issue"
+          required: true

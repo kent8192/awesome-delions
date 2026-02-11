@@ -1,0 +1,66 @@
+name: CI/CD Issue
+description: Report a CI/CD workflow issue
+title: "[CI]: <brief description>"
+labels: ["ci-cd"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a CI/CD issue! Please provide as much detail as possible.
+
+  - type: dropdown
+    attributes:
+      label: Affected Workflow
+      description: Select the affected CI/CD workflow
+      options:
+        - ci.yml (Quality checks)
+        - release-plz.yml (Release automation)
+        - Other (specify below)
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Issue Description
+      description: Clearly describe the CI/CD issue
+      placeholder: |
+        Example: The CI workflow fails to detect changed delions when
+        multiple delions are modified in the same PR.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the CI/CD issue
+      placeholder: |
+        1. Push changes to delions/auth-delion/ and delions/cache-delion/
+        2. CI detects only one of the two changes
+        3. Quality checks run for only one delion
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Error Logs
+      description: Paste the relevant error logs
+      placeholder: |
+        Run: error output here
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Workflow Run URL
+      description: Link to the failed workflow run
+      placeholder: https://github.com/kent8192/awesome-delions/actions/runs/1234567890
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: Any other context or relevant information
+    validations:
+      required: false
