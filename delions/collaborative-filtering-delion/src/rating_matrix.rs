@@ -145,4 +145,57 @@ mod tests {
 		items.sort();
 		assert_eq!(items, vec![10, 20]);
 	}
+
+	#[rstest]
+	fn add_rating_overwrites_same_pair() {
+		// Arrange
+		let mut matrix = SparseRatingMatrix::new();
+		matrix.add_rating(UserId(1), ItemId(10), 3.0);
+
+		// Act
+		matrix.add_rating(UserId(1), ItemId(10), 5.0);
+
+		// Assert
+		let user_val = matrix.get_user_ratings(UserId(1)).unwrap()[&ItemId(10)];
+		assert!((user_val - 5.0).abs() < f64::EPSILON);
+		let item_val = matrix.get_item_ratings(ItemId(10)).unwrap()[&UserId(1)];
+		assert!((item_val - 5.0).abs() < f64::EPSILON);
+	}
+
+	#[rstest]
+	fn from_ratings_with_empty_array() {
+		// Act
+		let matrix = SparseRatingMatrix::from_ratings(&[]);
+
+		// Assert
+		assert_eq!(matrix.users().count(), 0);
+		assert_eq!(matrix.items().count(), 0);
+	}
+
+	#[rstest]
+	fn large_number_of_ratings() {
+		// Arrange
+		let ratings: Vec<Rating> = (0..100)
+			.flat_map(|u| {
+				(0..50).map(move |i| Rating {
+					user_id: UserId(u),
+					item_id: ItemId(i),
+					// Precision loss is acceptable: test values fit in f64
+					#[allow(clippy::cast_precision_loss)]
+					value: (u + i) as f64,
+				})
+			})
+			.collect();
+
+		// Act
+		let matrix = SparseRatingMatrix::from_ratings(&ratings);
+
+		// Assert
+		assert_eq!(matrix.users().count(), 100);
+		assert_eq!(matrix.items().count(), 50);
+		let val_0_49 = matrix.get_user_ratings(UserId(0)).unwrap()[&ItemId(49)];
+		assert!((val_0_49 - 49.0).abs() < f64::EPSILON);
+		let val_99_0 = matrix.get_user_ratings(UserId(99)).unwrap()[&ItemId(0)];
+		assert!((val_99_0 - 99.0).abs() < f64::EPSILON);
+	}
 }

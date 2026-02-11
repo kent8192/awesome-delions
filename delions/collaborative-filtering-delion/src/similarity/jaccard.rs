@@ -103,4 +103,32 @@ mod tests {
 			Err(CollaborativeFilteringError::EmptyVectors)
 		));
 	}
+
+	#[rstest]
+	fn all_nonzero_identical_vectors_return_one() {
+		// Arrange: every element is non-zero, sets are identical
+		let sim = JaccardSimilarity;
+		let a = [3.0, 7.0, -1.0, 0.5];
+
+		// Act
+		let result = sim.compute(&a, &a).unwrap();
+
+		// Assert
+		assert!((result - 1.0).abs() < 1e-10);
+	}
+
+	#[rstest]
+	fn one_vector_all_zeros_other_nonzero() {
+		// Arrange: a is all zeros, b has non-zero elements
+		let sim = JaccardSimilarity;
+		let a = [0.0, 0.0, 0.0];
+		let b = [1.0, 2.0, 3.0];
+		// intersection = 0, union = 3 → 0/3 = 0.0
+
+		// Act
+		let result = sim.compute(&a, &b).unwrap();
+
+		// Assert
+		assert!((result - 0.0).abs() < 1e-10);
+	}
 }

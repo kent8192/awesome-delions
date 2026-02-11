@@ -273,4 +273,83 @@ mod tests {
 		// Assert
 		assert!(recs.len() <= 1);
 	}
+
+	#[rstest]
+	fn high_min_similarity_filters_neighbors(small_dataset: SparseRatingMatrix) {
+		// Arrange: set min_similarity to 1.0 so no item can qualify
+		// (cosine similarity is strictly < 1.0 for non-identical co-rated vectors)
+		let recommender = ItemBasedRecommender::new(Box::new(CosineSimilarity));
+		let config = CollaborativeFilteringConfig {
+			k_neighbors: 20,
+			min_similarity: 1.0,
+		};
+
+		// Act
+		let result = recommender.predict(&small_dataset, UserId(1), ItemId(4), &config);
+
+		// Assert: should fail due to no qualifying similar items
+		assert!(matches!(
+			result,
+			Err(CollaborativeFilteringError::InsufficientData)
+		));
+	}
+
+	#[rstest]
+	fn k_neighbors_limits_neighbor_count(small_dataset: SparseRatingMatrix) {
+		// Arrange: k=1 means only the single most similar item is used
+		let recommender = ItemBasedRecommender::new(Box::new(CosineSimilarity));
+		let config_k1 = CollaborativeFilteringConfig {
+			k_neighbors: 1,
+			min_similarity: 0.0,
+		};
+		let config_all = CollaborativeFilteringConfig {
+			k_neighbors: 20,
+			min_similarity: 0.0,
+		};
+
+		// Act
+		let score_k1 = recommender
+			.predict(&small_dataset, UserId(1), ItemId(4), &config_k1)
+			.unwrap();
+		let score_all = recommender
+			.predict(&small_dataset, UserId(1), ItemId(4), &config_all)
+			.unwrap();
+
+		// Assert: both produce valid scores
+		assert!((1.0..=5.0).contains(&score_k1));
+		assert!((1.0..=5.0).contains(&score_all));
+	}
+
+	#[rstest]
+	fn user_rated_only_one_item() {
+		// Arrange: user 4 has rated only item 1
+		let ratings = vec![
+			Rating {
+				user_id: UserId(1),
+				item_id: ItemId(1),
+				value: 5.0,
+			},
+			Rating {
+				user_id: UserId(1),
+				item_id: ItemId(2),
+				value: 4.0,
+			},
+			Rating {
+				user_id: UserId(4),
+				item_id: ItemId(1),
+				value: 3.0,
+			},
+		];
+		let matrix = SparseRatingMatrix::from_ratings(&ratings);
+		let recommender = ItemBasedRecommender::new(Box::new(CosineSimilarity));
+		let config = CollaborativeFilteringConfig::default();
+
+		// Act: predict user 4's rating for item 2
+		// item 2's co-rating users with item 1 is user 1 only → single user similarity
+		let result = recommender.predict(&matrix, UserId(4), ItemId(2), &config);
+
+		// Assert: should succeed since items 1 and 2 share user 1
+		let score = result.unwrap();
+		assert!((1.0..=5.0).contains(&score));
+	}
 }

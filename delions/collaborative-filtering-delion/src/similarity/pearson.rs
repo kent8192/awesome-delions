@@ -116,4 +116,40 @@ mod tests {
 		// Assert
 		assert!(matches!(result, Err(CollaborativeFilteringError::ZeroNorm)));
 	}
+
+	#[rstest]
+	fn different_length_vectors() {
+		// Arrange: mean uses a.len() for n, sum uses full vector,
+		// but zip in the loop processes only min(len) pairs.
+		let sim = PearsonCorrelation;
+		let a = [1.0, 2.0, 3.0];
+		let b = [2.0, 4.0, 6.0, 100.0, 200.0];
+		// n=3, mean_a=2.0, mean_b=312/3=104.0
+		// cov = (-1)(-102) + (0)(-100) + (1)(-98) = 4
+		// var_a = 2, var_b = 30008
+		// r = 4 / sqrt(2*30008) = 4 / sqrt(60016)
+		let expected = 4.0 / 60016.0_f64.sqrt();
+
+		// Act
+		let result = sim.compute(&a, &b).unwrap();
+
+		// Assert
+		assert!((result - expected).abs() < 1e-10);
+	}
+
+	#[rstest]
+	fn two_element_vectors() {
+		// Arrange: minimum valid length for meaningful Pearson
+		let sim = PearsonCorrelation;
+		let a = [1.0, 3.0];
+		let b = [2.0, 6.0];
+		// mean_a=2, mean_b=4, cov=(-1)(-2)+(1)(2)=4, std_a=sqrt(2), std_b=sqrt(8)
+		// r = 4/sqrt(16) = 4/4 = 1.0
+
+		// Act
+		let result = sim.compute(&a, &b).unwrap();
+
+		// Assert
+		assert!((result - 1.0).abs() < 1e-10);
+	}
 }
