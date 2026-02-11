@@ -38,7 +38,19 @@ jobs:
         with:
           components: clippy
 
+      - name: Check for workspace members
+        id: check-members
+        run: |
+          MEMBERS=$(cargo metadata --no-deps --format-version 1 2>/dev/null | jq '.packages | length')
+          if [ "$MEMBERS" -gt 0 ] 2>/dev/null; then
+            echo "has_members=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_members=false" >> "$GITHUB_OUTPUT"
+            echo "No workspace members found, skipping clippy TODO check."
+          fi
+
       - name: Check for todo! and dbg! macros
+        if: steps.check-members.outputs.has_members == 'true'
         run: |
           cargo clippy --workspace --all-targets -- \
             -D clippy::todo \
