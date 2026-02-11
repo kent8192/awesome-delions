@@ -1,0 +1,62 @@
+rules:
+  - id: rust-todo-comment
+    patterns:
+      - pattern-regex: //[/!]?\s*TODO
+    message: Unresolved TODO comment found. Resolve before merging.
+    languages: [generic]
+    severity: ERROR
+    paths:
+      include:
+        - "*.rs"
+      exclude:
+        - "template/"
+
+  - id: rust-fixme-comment
+    patterns:
+      - pattern-regex: //[/!]?\s*FIXME
+    message: >-
+      FIXME comment found. Use TODO instead of FIXME per project conventions.
+    languages: [generic]
+    severity: ERROR
+    paths:
+      include:
+        - "*.rs"
+      exclude:
+        - "template/"
+
+  - id: rust-block-comment-todo
+    patterns:
+      - pattern-regex: (?:/\*!?|\*)\s*(?:TODO|FIXME)
+    message: Unresolved TODO/FIXME found in block comment. Resolve before merging.
+    languages: [generic]
+    severity: ERROR
+    paths:
+      include:
+        - "*.rs"
+      exclude:
+        - "template/"
+
+  - id: config-todo-comment
+    patterns:
+      - pattern-regex: '#\s*TODO'
+    message: Unresolved TODO comment found in config file. Resolve before merging.
+    languages: [generic]
+    severity: ERROR
+    paths:
+      include:
+        - "*.yml"
+        - "*.yaml"
+        - "*.toml"
+
+  - id: config-fixme-comment
+    patterns:
+      - pattern-regex: '#\s*FIXME'
+    message: >-
+      FIXME comment found in Use TODO instead of FIXME per project conventions.
+    languages: [generic]
+    severity: ERROR
+    paths:
+      include:
+        - "*.yml"
+        - "*.yaml"
+        - "*.toml"
