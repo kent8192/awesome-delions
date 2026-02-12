@@ -217,7 +217,7 @@ mod tests {
 			.unwrap();
 
 		// Assert: score should be between 1.0 and 5.0
-		assert!(score >= 1.0 && score <= 5.0);
+		assert!((1.0..=5.0).contains(&score));
 	}
 
 	#[rstest]
