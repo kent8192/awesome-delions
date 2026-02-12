@@ -106,10 +106,7 @@ mod tests {
 	fn tf_unknown_tokens_ignored() {
 		// Arrange
 		let vocab = make_vocab(&["known"]);
-		let tokens: Vec<String> = ["unknown", "known"]
-			.iter()
-			.map(|s| s.to_string())
-			.collect();
+		let tokens: Vec<String> = ["unknown", "known"].iter().map(|s| s.to_string()).collect();
 
 		// Act
 		let tf = compute_tf(&tokens, &vocab, false);
