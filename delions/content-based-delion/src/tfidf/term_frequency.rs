@@ -49,7 +49,7 @@ mod tests {
 	fn tf_basic_counts() {
 		// Arrange
 		let vocab = make_vocab(&["cat", "dog", "fish"]);
-		let tokens: Vec<String> = vec!["cat", "dog", "cat"]
+		let tokens: Vec<String> = ["cat", "dog", "cat"]
 			.iter()
 			.map(|s| s.to_string())
 			.collect();
@@ -67,7 +67,7 @@ mod tests {
 	fn tf_sublinear() {
 		// Arrange
 		let vocab = make_vocab(&["hello", "world"]);
-		let tokens: Vec<String> = vec!["hello", "hello", "hello"]
+		let tokens: Vec<String> = ["hello", "hello", "hello"]
 			.iter()
 			.map(|s| s.to_string())
 			.collect();
@@ -106,7 +106,7 @@ mod tests {
 	fn tf_unknown_tokens_ignored() {
 		// Arrange
 		let vocab = make_vocab(&["known"]);
-		let tokens: Vec<String> = vec!["unknown", "known"]
+		let tokens: Vec<String> = ["unknown", "known"]
 			.iter()
 			.map(|s| s.to_string())
 			.collect();
