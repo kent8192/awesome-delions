@@ -1,0 +1,38 @@
+[package]
+name = "axum-delion"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Axum web framework integration for Reinhardt via dentdelion plugin system"
+include = [
+	"src/**",
+	"README.md",
+	"LICENSE-MIT",
+	"LICENSE-APACHE",
+	"CHANGELOG.md",
+]
+
+[dependencies]
+reinhardt = { path = "/tmp/reinhardt-headless", package = "reinhardt-web", default-features = false, features = ["dentdelion", "di", "core"] }
+axum = { version = "0.8", features = ["macros"] }
+axum-core = "0.5"
+tower = "0.5"
+tower-layer = "0.3"
+tower-service = "0.3"
+async-trait = "0.1"
+tokio = { version = "1", features = ["rt"] }
+http = "1"
+
+[features]
+default = ["database"]
+database = ["reinhardt/database"]
+auth = ["reinhardt/auth"]
+db-postgres = ["database", "reinhardt/db-postgres"]
+db-mysql = ["database", "reinhardt/db-mysql"]
+db-sqlite = ["database", "reinhardt/db-sqlite"]
+auth-jwt = ["auth", "reinhardt/auth-jwt"]
+
+[lints]
+workspace = true
