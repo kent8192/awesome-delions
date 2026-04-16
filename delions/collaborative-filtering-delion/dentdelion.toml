@@ -1,0 +1,5 @@
+[plugin]
+name = "collaborative-filtering-delion"
+version = "0.1.0"
+description = "User-based and item-based collaborative filtering recommendation plugin"
+capabilities = ["recommendation", "user-based", "item-based"]
