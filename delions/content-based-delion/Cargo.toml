@@ -1,0 +1,27 @@
+[package]
+name = "content-based-delion"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "TF-IDF and feature similarity content-based recommendation plugin"
+include = [
+	"src/**",
+	"README.md",
+	"LICENSE-MIT",
+	"LICENSE-APACHE",
+	"CHANGELOG.md",
+]
+
+[dependencies]
+reinhardt-dentdelion = { version = "0.1.0-alpha", default-features = false }
+inventory = "0.3"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+rstest = "0.24"
+
+[lints]
+workspace = true
