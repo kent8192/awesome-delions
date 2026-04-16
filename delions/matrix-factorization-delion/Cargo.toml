@@ -1,0 +1,30 @@
+[package]
+name = "matrix-factorization-delion"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "SVD and ALS matrix factorization recommendation plugin"
+include = [
+	"src/**",
+	"README.md",
+	"LICENSE-MIT",
+	"LICENSE-APACHE",
+	"CHANGELOG.md",
+]
+
+[dependencies]
+reinhardt-dentdelion = { version = "0.1.0-alpha", default-features = false }
+inventory = "0.3"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+ndarray = "0.16"
+rand = "0.9"
+
+[dev-dependencies]
+rstest = "0.24"
+approx = "0.5"
+
+[lints]
+workspace = true
