@@ -1,0 +1,5 @@
+[plugin]
+name = "popularity-delion"
+version = "0.1.0"
+description = "Time-decay popularity-based recommendation plugin"
+capabilities = ["recommendation", "popularity", "trending"]

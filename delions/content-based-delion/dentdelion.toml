@@ -1,0 +1,5 @@
+[plugin]
+name = "content-based-delion"
+version = "0.1.0"
+description = "TF-IDF and feature similarity content-based recommendation plugin"
+capabilities = ["recommendation", "content-analysis", "tfidf"]
