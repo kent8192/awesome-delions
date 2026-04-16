@@ -1,0 +1,5 @@
+[plugin]
+name = "axum-delion"
+version = "0.1.0"
+description = "Axum web framework integration for Reinhardt"
+capabilities = ["Services", "Middleware"]
