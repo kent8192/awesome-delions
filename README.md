@@ -11,6 +11,17 @@ Each delion is an independent Rust crate located under `delions/`. The repositor
 - Automated releases via [release-plz](https://release-plz.ieni.dev/)
 - `cargo-generate` template for creating new delions
 
+## Available Delions
+
+- `axum-di-delion` - Axum layer and extractor integration for standalone
+  Reinhardt dependency injection.
+- `collaborative-filtering-delion` - User-based and item-based collaborative
+  filtering recommendations.
+- `content-based-delion` - Content-based recommendations using item and user
+  profiles.
+- `matrix-factorization-delion` - Matrix factorization recommendation models.
+- `popularity-delion` - Time-decay popularity and trending recommendations.
+
 ## Creating a New Delion
 
 ### Using cargo-generate
