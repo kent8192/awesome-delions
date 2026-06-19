@@ -1,0 +1,32 @@
+[package]
+name = "axum-di-delion"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Axum integration delion for Reinhardt dependency injection"
+include = [
+	"src/**",
+	"README.md",
+	"dentdelion.toml",
+	"LICENSE-MIT",
+	"LICENSE-APACHE",
+	"CHANGELOG.md",
+]
+
+[dependencies]
+axum = "0.8"
+inventory = "0.3"
+reinhardt = { package = "reinhardt-web", version = "0.3.0-rc.1", default-features = false, features = ["di", "dentdelion"] }
+thiserror = "2"
+tower = "0.5"
+
+[dev-dependencies]
+rstest = "0.24"
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tower = { version = "0.5", features = ["util"] }
+
+[lints]
+workspace = true

@@ -1,0 +1,5 @@
+[plugin]
+name = "axum-di-delion"
+version = "0.1.0"
+description = "Axum integration delion for Reinhardt dependency injection"
+capabilities = ["axum", "di", "integration"]
