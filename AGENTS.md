@@ -67,6 +67,7 @@ See @instructions/DELION_PATTERNS.md for the full contract (DP-1 ~ DP-8):
 - NO relative paths beyond `../` (use absolute paths from crate root)
 - Mark ALL placeholders with `todo!()` or `// TODO:` comment
 - Document ALL `#[allow(...)]` attributes with explanatory comments (see @instructions/ANTI_PATTERNS.md)
+- **MUST manage all resources via RAII** (Drop-based guard types); NO manual `close()`/`release()`/`cleanup()` that can be skipped on an early `return`, `?`, or panic; NO `mem::forget` / `ManuallyDrop` / immediate-drop `let _ = lock()` without a justifying comment (see @instructions/ANTI_PATTERNS.md)
 
 **Unimplemented Features Notation:**
 - `todo!()` - Features that WILL be implemented
@@ -436,6 +437,7 @@ Before submitting code:
 - When editing `AGENTS.md` or `CLAUDE.md`, mirror the change into the other file in the same commit (AGENTS.md ↔ CLAUDE.md sync policy)
 - Mark placeholders with `todo!()` or `// TODO:`
 - Use `#[serial(group_name)]` for global state tests
+- Manage all resources via RAII (Drop-based guards) — wrap locks, files, DB transactions, spawned tasks, temp dirs, and FFI handles in guard types (see @instructions/ANTI_PATTERNS.md)
 - Split commits by specific intent, not features
 - Follow Conventional Commits v1.0.0 format: `<type>[scope]: <description>`
 - Start commit description with lowercase letter
@@ -510,6 +512,8 @@ Before submitting code:
 - Create circular dependencies
 - Leave unmarked placeholder implementations
 - Use `#[allow(...)]` without explanatory comments
+- Release resources manually in a way that can be skipped on an early `return` / `?` / panic (use RAII Drop instead)
+- Bypass Drop with `mem::forget` / `ManuallyDrop` / immediate-drop `let _ = lock()` without a justifying comment
 - Use alternative TODO notations (`FIXME:`, `NOTE:` for unimplemented features)
 - Create batch commits without user confirmation
 - Use relative paths beyond `../`
