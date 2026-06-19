@@ -17,6 +17,7 @@ include = [
 
 [dependencies]
 axum = "0.8"
+inventory = "0.3"
 reinhardt = { package = "reinhardt-web", version = "0.3.0-rc.1", default-features = false, features = ["di", "dentdelion"] }
 thiserror = "2"
 tower = "0.5"

@@ -1,4 +1,7 @@
-use reinhardt::dentdelion::prelude::{Capability, Plugin, PluginLifecycle, PluginMetadata};
+use reinhardt::dentdelion::prelude::{
+	ArcPlugin, Capability, Plugin, PluginLifecycle, PluginMetadata, register_plugin,
+};
+use std::sync::Arc;
 
 pub struct AxumDiPlugin {
 	metadata: PluginMetadata,
@@ -52,3 +55,9 @@ impl Plugin for AxumDiPlugin {
 }
 
 impl PluginLifecycle for AxumDiPlugin {}
+
+fn create_plugin() -> ArcPlugin {
+	Arc::new(AxumDiPlugin::new())
+}
+
+register_plugin!(create_plugin);

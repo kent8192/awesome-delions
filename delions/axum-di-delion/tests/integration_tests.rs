@@ -7,7 +7,8 @@ use axum::extract::{Path, Query};
 use axum::http::{Request, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum_di_delion::{Di, DiLayer, DiRejection};
+use axum_di_delion::{AxumDiPlugin, Di, DiLayer, DiRejection};
+use reinhardt::dentdelion::prelude::Plugin;
 use reinhardt::di::{
 	DependencyRegistry, DependencyScope, Depends, DiError, DiResult, FactoryOutput, Injectable,
 	InjectableKey, InjectionContext, SingletonScope,
@@ -314,4 +315,40 @@ fn rejection_response_statuses_are_internal_server_error() {
 	// Assert
 	assert_eq!(missing_response.status(), StatusCode::INTERNAL_SERVER_ERROR);
 	assert_eq!(resolve_response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+}
+
+#[rstest]
+fn plugin_metadata_matches_crate_metadata() {
+	// Arrange
+	let plugin = AxumDiPlugin::new();
+
+	// Act
+	let metadata = plugin.metadata();
+	let capabilities = plugin
+		.capabilities()
+		.iter()
+		.map(|capability| capability.as_str())
+		.collect::<Vec<_>>();
+
+	// Assert
+	assert_eq!(metadata.name.as_str(), "axum-di-delion");
+	assert_eq!(metadata.version.to_string(), env!("CARGO_PKG_VERSION"));
+	assert_eq!(
+		metadata.description.as_str(),
+		"Axum integration delion for Reinhardt dependency injection"
+	);
+	assert_eq!(capabilities, vec!["axum", "di", "integration"]);
+}
+
+#[rstest]
+fn plugin_is_registered_for_static_discovery() {
+	// Arrange
+	let expected_name = "axum-di-delion";
+
+	// Act
+	let registered = reinhardt::dentdelion::plugin::registered_plugins()
+		.any(|plugin| plugin.metadata().name == expected_name);
+
+	// Assert
+	assert!(registered, "axum-di-delion should be registered");
 }

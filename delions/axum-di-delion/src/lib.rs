@@ -10,21 +10,38 @@
 //!
 //! The public API is designed for this handler shape:
 //!
-//! ```rust,ignore
+//! ```rust,no_run
 //! use axum::{Router, extract::Path, routing::get};
 //! use axum_di_delion::{Di, DiLayer};
-//! use reinhardt::di::{Depends, InjectableKey, InjectionContext, SingletonScope};
+//! use reinhardt::di::{
+//!     DependencyRegistry, DependencyScope, Depends, FactoryOutput, InjectableKey,
+//!     InjectionContext, SingletonScope,
+//! };
 //! use std::sync::Arc;
 //!
 //! struct AuthKey;
 //! impl InjectableKey for AuthKey {}
 //!
-//! struct AuthService;
+//! #[derive(Clone)]
+//! struct AuthService {
+//!     prefix: &'static str,
+//! }
+//!
 //! impl AuthService {
 //!     async fn authorize(&self, id: u64) -> String {
-//!         format!("authorized:{id}")
+//!         format!("{}:{id}", self.prefix)
 //!     }
 //! }
+//!
+//! let registry = DependencyRegistry::new();
+//! registry.register_async::<FactoryOutput<AuthKey, AuthService>, _, _>(
+//!     DependencyScope::Request,
+//!     |_ctx| async {
+//!         Ok(FactoryOutput::<AuthKey, AuthService>::new(AuthService {
+//!             prefix: "authorized",
+//!         }))
+//!     },
+//! );
 //!
 //! async fn handler(
 //!     Di(auth): Di<Depends<AuthKey, AuthService>>,
@@ -34,8 +51,10 @@
 //! }
 //!
 //! let singleton = Arc::new(SingletonScope::new());
-//! let root_context = InjectionContext::builder(singleton).build();
-//! let app = Router::new()
+//! let root_context = InjectionContext::builder(singleton)
+//!     .with_registry(Arc::new(registry))
+//!     .build();
+//! let app: Router<()> = Router::new()
 //!     .route("/users/{id}", get(handler))
 //!     .layer(DiLayer::new(root_context));
 //! # let _ = app;
