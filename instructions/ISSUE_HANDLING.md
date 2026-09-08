@@ -19,7 +19,7 @@ flowchart TD
     E -->|Yes| F["Propose change in reinhardt facade<br/>(not in delions)"]
     F --> G["Wait for facade release before dependent delion PRs"]
     E -->|No| G
-    G --> H["HA-3: Parallelize independent delion work<br/>via Agent Teams"]
+    G --> H["HA-3: Work in the current agent<br/>Delegate only on explicit user request"]
     H --> I["WU-1: 1 PR = 1 delion x 1 fix pattern"]
 ```
 
@@ -54,24 +54,14 @@ Divide batch work into phases ordered by severity and exploitability, addressing
 | Phase 2 | High | Significant risk but harder to exploit | #107, #102 |
 | Phase 3 | Medium | Important improvements | #104, #105, #106 |
 
-### HA-3 (SHOULD): Agent Team Parallel Work
+### HA-3 (SHOULD): Single-Agent Execution
 
-Use Agent Teams to parallelize work across independent delions within the same phase.
+Work in the current agent by default. Use subagents only when the user explicitly requests delegation for the current task.
 
-**Rationale:** Since inter-delion dependencies are prohibited (@instructions/DELION_PATTERNS.md DP-4), fixes in different delions are inherently independent and can be implemented simultaneously by different agents.
-
-**Prerequisites for parallelization:**
-- Fixes are in separate delions with no shared code changes required
-- No preceding change in the `reinhardt` facade is needed
-- Each agent can complete its work independently
-
-**Example:**
-```
-Phase 1 (parallel work):
-  Agent A → auth-delion (fix #101)
-  Agent B → session-delion (fix #103)
-  Agent C → audit-log-delion (fix #107)
-```
+Keep dependent work and edits to shared files sequential. If delegation is
+requested, give each agent independent file ownership and integrate its result
+before final validation. Separate crates or applications alone do not establish
+independence when a shared dependency or utility must change first (see WU-3).
 
 ### HA-4 (MUST): Branch Organization
 
@@ -184,7 +174,7 @@ are prohibited, propose it in the `reinhardt` facade instead.
 Upstream: propose structured error types in reinhardt facade
   → reinhardt release vX.Y.Z lands on crates.io
 
-Commits (parallel via Agent Team, HA-3), each depending on reinhardt vX.Y.Z:
+Commits (sequential by default; delegation requires explicit user request, HA-3), each depending on reinhardt vX.Y.Z:
   "fix(auth-delion): adopt reinhardt structured error types"       → PR #B
   "fix(session-delion): adopt reinhardt structured error types"    → PR #C
   "fix(audit-log-delion): adopt reinhardt structured error types"  → PR #D
